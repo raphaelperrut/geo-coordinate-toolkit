@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 
 from geo_coordinate_toolkit.crs import inspect_crs
+from geo_coordinate_toolkit.distance import calculate_distance
 from geo_coordinate_toolkit.reproject import reproject_vector
 from geo_coordinate_toolkit.transform import transform_coordinate
 
@@ -109,6 +110,61 @@ def reproject(
         f"[bold green]Success:[/bold green] "
         f"{feature_count} feature(s) written to {output_path}"
     )
+
+@app.command()
+def distance(
+    x1: float = typer.Option(
+        ...,
+        "--x1",
+        help="X coordinate of the first point.",
+    ),
+    y1: float = typer.Option(
+        ...,
+        "--y1",
+        help="Y coordinate of the first point.",
+    ),
+    x2: float = typer.Option(
+        ...,
+        "--x2",
+        help="X coordinate of the second point.",
+    ),
+    y2: float = typer.Option(
+        ...,
+        "--y2",
+        help="Y coordinate of the second point.",
+    ),
+    crs: str = typer.Option(
+        ...,
+        "--crs",
+        help="CRS of the input coordinates, for example EPSG:4326.",
+    ),
+) -> None:
+    """Calculate the distance between two points."""
+
+    try:
+        value, unit = calculate_distance(
+            x1=x1,
+            y1=y1,
+            x2=x2,
+            y2=y2,
+            crs_input=crs,
+        )
+    except ValueError as exc:
+        console.print(f"[bold red]Error:[/bold red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    table = Table(title="Distance")
+
+    table.add_column("Property", style="bold")
+    table.add_column("Value")
+
+    table.add_row("CRS", crs)
+    table.add_row("Point 1", f"{x1}, {y1}")
+    table.add_row("Point 2", f"{x2}, {y2}")
+    table.add_row("Distance", f"{value:.3f}")
+    table.add_row("Unit", unit)
+
+    console.print(table)
 
 @app.command()
 def transform(
