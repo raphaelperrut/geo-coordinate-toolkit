@@ -15,6 +15,7 @@ authors = [
 
 dependencies = [
     "pyproj>=3.7,<4",
+    "geopandas>=1.0,<2",
     "typer>=0.15,<1",
     "rich>=13,<15"
 ]

@@ -1,9 +1,12 @@
+from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from geo_coordinate_toolkit.transform import transform_coordinate
 from geo_coordinate_toolkit.crs import inspect_crs
+from geo_coordinate_toolkit.reproject import reproject_vector
+from geo_coordinate_toolkit.transform import transform_coordinate
 
 app = typer.Typer(
     name="geo-coord",
@@ -65,6 +68,47 @@ def inspect(
     )
 
     console.print(table)
+
+
+@app.command()
+def reproject(
+    input_path: Path = typer.Argument(
+        ...,
+        help="Input vector dataset.",
+    ),
+    target_crs: str = typer.Option(
+        ...,
+        "--to",
+        help="Target CRS, for example EPSG:31983.",
+    ),
+    output_path: Path = typer.Option(
+        ...,
+        "--output",
+        "-o",
+        help="Output vector dataset.",
+    ),
+) -> None:
+    """Reproject a vector dataset to another CRS."""
+
+    try:
+        feature_count = reproject_vector(
+            input_path=input_path,
+            output_path=output_path,
+            target_crs=target_crs,
+        )
+    except ValueError as exc:
+        console.print(f"[bold red]Error:[/bold red] {exc}")
+        raise typer.Exit(code=1) from exc
+    except Exception as exc:
+        console.print(
+            f"[bold red]Error while processing vector dataset:[/bold red] {exc}"
+        )
+        raise typer.Exit(code=1) from exc
+
+    console.print(
+        f"[bold green]Success:[/bold green] "
+        f"{feature_count} feature(s) written to {output_path}"
+    )
 
 @app.command()
 def transform(
