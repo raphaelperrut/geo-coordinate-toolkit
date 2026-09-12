@@ -35,3 +35,23 @@ def test_invalid_crs() -> None:
             source_crs="EPSG:INVALID",
             target_crs="EPSG:4326",
         )
+
+@pytest.mark.parametrize(
+    ("x", "y"),
+    [
+        (float("nan"), 0.0),
+        (float("inf"), 0.0),
+        (0.0, float("-inf")),
+    ],
+)
+def test_non_finite_coordinates(x: float, y: float) -> None:
+    with pytest.raises(
+        ValueError,
+        match="Coordinates must be finite numbers",
+    ):
+        transform_coordinate(
+            x=x,
+            y=y,
+            source_crs="EPSG:4326",
+            target_crs="EPSG:31983",
+        )

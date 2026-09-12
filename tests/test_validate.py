@@ -51,3 +51,20 @@ def test_validate_missing_file(tmp_path: Path) -> None:
         validate_geometries(
             tmp_path / "missing.geojson"
         )
+
+def test_validate_missing_geometry(tmp_path: Path) -> None:
+    data = gpd.GeoDataFrame(
+        {"name": ["missing"]},
+        geometry=[None],
+        crs="EPSG:4326",
+    )
+
+    input_path = tmp_path / "missing_geometry.geojson"
+    data.to_file(input_path)
+
+    result = validate_geometries(input_path)
+
+    assert result.total == 1
+    assert result.valid == 0
+    assert result.invalid == 1
+    assert result.empty == 0

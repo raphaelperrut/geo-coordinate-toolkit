@@ -43,9 +43,19 @@ def validate_geometries(
 
     total = len(data)
 
-    empty_mask = data.geometry.is_empty
-    invalid_mask = ~data.geometry.is_valid & ~empty_mask
-    valid_mask = data.geometry.is_valid & ~empty_mask
+    missing_mask = data.geometry.isna()
+    empty_mask = data.geometry.is_empty.fillna(False)
+
+    valid_mask = (
+        data.geometry.is_valid
+        & ~missing_mask
+        & ~empty_mask
+    )
+
+    invalid_mask = (
+        (~data.geometry.is_valid & ~empty_mask)
+        | missing_mask
+    )
 
     return GeometryValidationResult(
         total=total,

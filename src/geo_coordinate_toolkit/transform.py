@@ -1,5 +1,6 @@
 from pyproj import CRS, Transformer
 from pyproj.exceptions import CRSError
+from math import isfinite
 
 
 def transform_coordinate(
@@ -32,6 +33,8 @@ def transform_coordinate(
     ValueError
         If either CRS is invalid.
     """
+    if not all(isfinite(value) for value in (x, y)):
+        raise ValueError("Coordinates must be finite numbers.")
 
     try:
         source = CRS.from_user_input(source_crs)
