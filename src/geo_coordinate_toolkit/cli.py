@@ -8,6 +8,7 @@ from geo_coordinate_toolkit.crs import inspect_crs
 from geo_coordinate_toolkit.distance import calculate_distance
 from geo_coordinate_toolkit.reproject import reproject_vector
 from geo_coordinate_toolkit.transform import transform_coordinate
+from geo_coordinate_toolkit.validate import validate_geometries
 
 app = typer.Typer(
     name="geo-coord",
@@ -165,6 +166,42 @@ def distance(
     table.add_row("Unit", unit)
 
     console.print(table)
+
+@app.command()
+def validate(
+    input_path: Path = typer.Argument(
+        ...,
+        help="Input vector dataset.",
+    ),
+) -> None:
+    """Validate geometries in a vector dataset."""
+
+    try:
+        result = validate_geometries(input_path)
+    except ValueError as exc:
+        console.print(f"[bold red]Error:[/bold red] {exc}")
+        raise typer.Exit(code=1) from exc
+    except Exception as exc:
+        console.print(
+            f"[bold red]Error while validating vector dataset:[/bold red] {exc}"
+        )
+        raise typer.Exit(code=1) from exc
+
+    table = Table(title="Geometry Validation")
+
+    table.add_column("Property", style="bold")
+    table.add_column("Value")
+
+    table.add_row("Dataset", str(input_path))
+    table.add_row("Total geometries", str(result.total))
+    table.add_row("Valid geometries", str(result.valid))
+    table.add_row("Invalid geometries", str(result.invalid))
+    table.add_row("Empty geometries", str(result.empty))
+
+    console.print(table)
+
+    if result.invalid > 0:
+        raise typer.Exit(code=2)
 
 @app.command()
 def transform(
